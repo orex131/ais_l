@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学术驿站 — 学术会议 · 科研工具 · 资源导航</title>
+<meta name="description" content="学术驿站：一站式学术信息平台，汇聚学术会议日历、科研实用工具、文献资源导航与科研社区交流。">
+<style>
+  :root {
+    --primary: #2b6cb0;
+    --primary-dark: #1e4e8c;
+    --accent: #e67e22;
+    --bg: #f7f9fb;
+    --card-bg: #ffffff;
+    --text: #2d3748;
+    --text-light: #718096;
+    --border: #e2e8f0;
+    --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { color: var(--primary-dark); }
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  /* ===== 顶部导航 ===== */
+  header {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo .mark {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--primary), #4c9aff);
+    border-radius: 8px;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  nav ul { display: flex; list-style: none; gap: 28px; }
+  nav a { color: var(--text); font-size: 15px; font-weight: 500; }
+  nav a:hover { color: var(--primary); }
+  .nav-cta {
+    background: var(--primary);
+    color: #fff !important;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+  }
+  .nav-cta:hover { background: var(--primary-dark); }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #1e4e8c 0%, #2b6cb0 55%, #4c9aff 100%);
+    color: #fff;
+    text-align: center;
+    padding: 72px 20px 84px;
+  }
+  .hero h1 { font-size: 34px; margin-bottom: 14px; }
+  .hero p { font-size: 17px; opacity: .9; max-width: 640px; margin: 0 auto 30px; }
+  .search-bar {
+    max-width: 620px;
+    margin: 0 auto;
+    display: flex;
+    background: #fff;
+    border-radius: 28px;
+    padding: 6px 6px 6px 22px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  }
+  .search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: var(--text);
+    background: transparent;
+  }
+  .search-bar button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 22px;
+    padding: 10px 28px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .search-bar button:hover { background: #cf6d15; }
+  .hero-tags { margin-top: 18px; font-size: 13px; opacity: .85; }
+  .hero-tags span { margin: 0 8px; cursor: pointer; }
+
+  /* ===== 通用区块 ===== */
+  section { padding: 56px 0; }
+  .section-head { text-align: center; margin-bottom: 36px; }
+  .section-head h2 { font-size: 26px; margin-bottom: 8px; }
+  .section-head p { color: var(--text-light); font-size: 15px; }
+  .section-head .bar {
+    width: 44px; height: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+
+  /* ===== 会议列表 ===== */
+  .conf-filter { display: flex; gap: 10px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+  .conf-filter button {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    padding: 7px 20px;
+    border-radius: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .conf-filter button.active, .conf-filter button:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .conf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .conf-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    transition: box-shadow .2s, transform .2s;
+  }
+  .conf-card:hover { box-shadow: 0 6px 18px rgba(43,108,176,.12); transform: translateY(-3px); }
+  .conf-card .tag {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  .tag-cs { background: #ebf4ff; color: #2b6cb0; }
+  .tag-bio { background: #e6fffa; color: #285e61; }
+  .tag-mat { background: #fffaf0; color: #b7791f; }
+  .tag-med { background: #fff5f5; color: #c53030; }
+  .conf-card h3 { font-size: 17px; margin-bottom: 8px; }
+  .conf-card .meta { font-size: 13.5px; color: var(--text-light); margin-bottom: 4px; }
+  .conf-card .deadline { color: #c53030; font-weight: 600; }
+  .conf-card .more { display: inline-block; margin-top: 10px; font-size: 14px; }
+
+  /* ===== 工具 ===== */
+  .tools {
+    background: #fff;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .tool-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    transition: box-shadow .2s, transform .2s;
+    color: var(--text);
+  }
+  .tool-card:hover { box-shadow: 0 6px 18px rgba(43,108,176,.12); transform: translateY(-3px); color: var(--text); }
+  .tool-card .icon { font-size: 32px; margin-bottom: 12px; }
+  .tool-card h3 { font-size: 16px; margin-bottom: 6px; }
+  .tool-card p { font-size: 13.5px; color: var(--text-light); }
+  .tool-card .src { display: inline-block; margin-top: 8px; font-size: 12px; color: #90a4bf; }
+
+  /* ===== 资源导航 ===== */
+  .res-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; }
+  .res-col h3 {
+    font-size: 16px;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid var(--primary);
+  }
+  .res-col ul { list-style: none; }
+  .res-col li { margin-bottom: 10px; font-size: 14.5px; }
+  .res-col li a { color: var(--text); }
+  .res-col li a:hover { color: var(--primary); }
+  .res-col li span { color: var(--text-light); font-size: 12.5px; margin-left: 6px; }
+
+  /* ===== 社区 ===== */
+  .community { background: #fff; border-top: 1px solid var(--border); }
+  .post-list { max-width: 760px; margin: 0 auto; }
+  .post-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 4px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .post-item:last-child { border-bottom: none; }
+  .post-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4c9aff, #2b6cb0);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .post-body h4 { font-size: 15.5px; margin-bottom: 4px; }
+  .post-body .post-meta { font-size: 13px; color: var(--text-light); }
+  .post-stats { margin-left: auto; display: flex; gap: 18px; font-size: 13px; color: var(--text-light); flex-shrink: 0; align-items: center; }
+
+  /* ===== 订阅 ===== */
+  .subscribe {
+    background: linear-gradient(135deg, #1e4e8c, #2b6cb0);
+    color: #fff;
+    text-align: center;
+    padding: 48px 20px;
+  }
+  .subscribe h2 { font-size: 22px; margin-bottom: 8px; }
+  .subscribe p { opacity: .9; margin-bottom: 22px; font-size: 15px; }
+  .subscribe form { display: flex; max-width: 460px; margin: 0 auto; }
+  .subscribe input {
+    flex: 1;
+    border: none;
+    border-radius: 6px 0 0 6px;
+    padding: 12px 16px;
+    font-size: 14px;
+    outline: none;
+  }
+  .subscribe button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 26px;
+    font-size: 14px;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+  }
+
+  /* ===== 页脚 ===== */
+  footer {
+    background: #1a202c;
+    color: #a0aec0;
+    padding: 36px 0 24px;
+    font-size: 14px;
+  }
+  .footer-grid {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  footer a { color: #cbd5e0; }
+  footer a:hover { color: #fff; }
+  .copyright { text-align: center; border-top: 1px solid #2d3748; padding-top: 18px; font-size: 13px; }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 720px) {
+    nav ul { display: none; }
+    .hero h1 { font-size: 26px; }
+    .post-stats { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<header>
+  <div class="container nav">
+    <div class="logo"><span class="mark">学</span>学术驿站</div>
+    <nav>
+      <ul>
+        <li><a href="#home">首页</a></li>
+        <li><a href="#conferences">学术会议</a></li>
+        <li><a href="#tools">科研工具</a></li>
+        <li><a href="#resources">资源导航</a></li>
+        <li><a href="#community">社区交流</a></li>
+      </ul>
+    </nav>
+    <a href="#community" class="nav-cta">登录 / 注册</a>
+  </div>
+</header>
+
+<!-- Hero + 全站搜索 -->
+<section class="hero" id="home">
+  <h1>科研路上，一站直达</h1>
+  <p>汇聚学术会议、科研工具与文献资源，帮助每一位科研人高效获取信息、专注科研本身。</p>
+  <div class="search-bar">
+    <input type="text" id="globalSearch" placeholder="搜索会议、期刊、工具、经验帖……">
+    <button onclick="doSearch()">搜索</button>
+  </div>
+  <div class="hero-tags">
+    热门：<span onclick="quickSearch('国自然')">国自然</span> |
+    <span onclick="quickSearch('博士招生')">博士招生</span> |
+    <span onclick="quickSearch('影响因子')">影响因子</span> |
+    <span onclick="quickSearch('论文润色')">论文润色</span>
+  </div>
+</section>
+
+<!-- 学术会议 -->
+<section id="conferences">
+  <div class="container">
+    <div class="section-head">
+      <h2>学术会议速递</h2>
+      <p>会议信息来源：<a href="https://www.allconfs.org" target="_blank" rel="noopener">学术会议云 Allconfs</a> 及各学会官网，仅供参考，以主办方官方通知为准</p>
+      <div class="bar"></div>
+    </div>
+    <div class="conf-filter" id="confFilter">
+      <button class="active" data-cat="all">全部</button>
+      <button data-cat="cs">计算机 / AI</button>
+      <button data-cat="bio">生物 / 化学</button>
+      <button data-cat="mat">材料 / 工程</button>
+      <button data-cat="med">医学 / 健康</button>
+    </div>
+    <div class="conf-grid" id="confGrid">
+      <div class="conf-card" data-cat="cs">
+        <span class="tag tag-cs">计算机 / AI</span>
+        <h3>第十二届中国人工智能大会 (CCAI 2027)</h3>
+        <div class="meta">📅 会议时间：2027-08-15 ~ 08-17 · 北京</div>
+        <div class="meta deadline">✍️ 投稿截止：2027-03-31</div>
+        <a class="more" href="https://www.allconfs.org" target="_blank" rel="noopener">前往学术会议云查看 →</a>
+      </div>
+      <div class="conf-card" data-cat="bio">
+        <span class="tag tag-bio">生物 / 化学</span>
+        <h3>全国化学生物学学术研讨会</h3>
+        <div class="meta">📅 会议时间：2027-05-20 ~ 05-22 · 上海</div>
+        <div class="meta deadline">✍️ 投稿截止：2027-02-28</div>
+        <a class="more" href="https://www.allconfs.org" target="_blank" rel="noopener">前往学术会议云查看 →</a>
+      </div>
+      <div class="conf-card" data-cat="mat">
+        <span class="tag tag-mat">材料 / 工程</span>
+        <h3>国际先进材料与制造技术大会 (ICAMT)</h3>
+        <div class="meta">📅 会议时间：2027-06-10 ~ 06-13 · 深圳</div>
+        <div class="meta deadline">✍️ 投稿截止：2027-01-15</div>
+        <a class="more" href="https://www.allconfs.org" target="_blank" rel="noopener">前往学术会议云查看 →</a>
+      </div>
+      <div class="conf-card" data-cat="med">
+        <span class="tag tag-med">医学 / 健康</span>
+        <h3>中华医学会临床流行病学年会</h3>
+        <div class="meta">📅 会议时间：2027-04-18 ~ 04-20 · 成都</div>
+        <div class="meta deadline">✍️ 投稿截止：2027-01-31</div>
+        <a class="more" href="https://www.allconfs.org" target="_blank" rel="noopener">前往学术会议云查看 →</a>
+      </div>
+      <div class="conf-card" data-cat="cs">
+        <span class="tag tag-cs">计算机 / AI</span>
+        <h3>全国数据科学与大数据技术学术会议</h3>
+        <div class="meta">📅 会议时间：2027-09-05 ~ 09-07 · 杭州</div>
+        <div class="meta deadline">✍️ 投稿截止：2027-04-30</div>
+        <a class="more" href="https://www.allconfs.org" target="_blank" rel="noopener">前往学术会议云查看 →</a>
+      </div>
+      <div class="conf-card" data-cat="bio">
+        <span class="tag tag-bio">生物 / 化学</span>
+        <h3>国际分子生物学与基因治疗峰会</h3>
+        <div class="meta">📅 会议时间：2027-07-02 ~ 07-04 · 广州</div>
+        <div class="meta deadline">✍️ 投稿截止：2027-03-15</div>
+        <a class="more" href="https://www.allconfs.org" target="_blank" rel="noopener">前往学术会议云查看 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 科研工具 -->
+<section class="tools" id="tools">
+  <div class="container">
+    <div class="section-head">
+      <h2>实用科研工具</h2>
+      <p>精选常用工具，覆盖科研全流程</p>
+      <div class="bar"></div>
+    </div>
+    <div class="tool-grid">
+      <a class="tool-card" href="https://xueshu.baidu.com" target="_blank" rel="noopener">
+        <div class="icon">🔎</div>
+        <h3>文献检索</h3>
+        <p>聚合期刊、学位论文、会议文献检索</p>
+        <span class="src">来源：百度学术</span>
+      </a>
+      <a class="tool-card" href="https://www.letpub.com.cn" target="_blank" rel="noopener">
+        <div class="icon">📊</div>
+        <h3>期刊影响因子查询</h3>
+        <p>查询最新 JCR 分区与影响因子</p>
+        <span class="src">来源：LetPub</span>
+      </a>
+      <a class="tool-card" href="https://dict.cnki.net" target="_blank" rel="noopener">
+        <div class="icon">🌐</div>
+        <h3>学术翻译</h3>
+        <p>专业术语与学术语句翻译参考</p>
+        <span class="src">来源：CNKI 翻译助手</span>
+      </a>
+      <a class="tool-card" href="https://www.zotero.org" target="_blank" rel="noopener">
+        <div class="icon">📚</div>
+        <h3>文献管理助手</h3>
+        <p>免费开源文献管理工具及插件</p>
+        <span class="src">来源：Zotero 官网</span>
+      </a>
+      <a class="tool-card" href="https://www.paperpass.com" target="_blank" rel="noopener">
+        <div class="icon">✅</div>
+        <h3>论文查重</h3>
+        <p>论文查重检测与降重参考</p>
+        <span class="src">来源：PaperPass</span>
+      </a>
+      <a class="tool-card" href="https://www.graphpad.com" target="_blank" rel="noopener">
+        <div class="icon">🧮</div>
+        <h3>科研绘图</h3>
+        <p>统计图表与科研绘图工具</p>
+        <span class="src">来源：GraphPad Prism</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- 资源导航 -->
+<section id="resources">
+  <div class="container">
+    <div class="section-head">
+      <h2>科研资源导航</h2>
+      <p>常用数据库与学习资源，一键直达</p>
+      <div class="bar"></div>
+    </div>
+    <div class="res-cols">
+      <div class="res-col">
+        <h3>文献数据库</h3>
+        <ul>
+          <li><a href="https://www.cnki.net" target="_blank" rel="noopener">中国知网 (CNKI)</a><span>中文学术文献</span></li>
+          <li><a href="https://www.webofscience.com" target="_blank" rel="noopener">Web of Science</a><span>核心期刊索引</span></li>
+          <li><a href="https://pubmed.ncbi.nlm.nih.gov" target="_blank" rel="noopener">PubMed</a><span>生物医学文献</span></li>
+          <li><a href="https://arxiv.org" target="_blank" rel="noopener">arXiv</a><span>预印本平台</span></li>
+        </ul>
+      </div>
+      <div class="res-col">
+        <h3>基金与项目</h3>
+        <ul>
+          <li><a href="https://www.nsfc.gov.cn" target="_blank" rel="noopener">国家自然科学基金委</a><span>NSFC 申报指南</span></li>
+          <li><a href="https://www.most.gov.cn" target="_blank" rel="noopener">科技部政务平台</a><span>国家重点研发计划</span></li>
+          <li><a href="http://www.moe.gov.cn" target="_blank" rel="noopener">中华人民共和国教育部</a><span>高校科研政策</span></li>
+        </ul>
+      </div>
+      <div class="res-col">
+        <h3>招生与招聘</h3>
+        <ul>
+          <li><a href="https://yz.chsi.com.cn" target="_blank" rel="noopener">中国研究生招生信息网</a><span>硕博招生官方平台</span></li>
+          <li><a href="https://www.chinapostdoctor.org.cn" target="_blank" rel="noopener">中国博士后</a><span>博后招聘与基金</span></li>
+          <li><a href="https://www.gaoxiaojob.com" target="_blank" rel="noopener">高校人才网</a><span>教职与人才引进</span></li>
+        </ul>
+      </div>
+      <div class="res-col">
+        <h3>科研经验 <span style="font-size:12px;font-weight:normal;color:var(--text-light);">（来源：小木虫 / 科学网）</span></h3>
+        <ul>
+          <li><a href="https://blog.sciencenet.cn" target="_blank" rel="noopener">科学网博客</a><span>论文写作与投稿经验</span></li>
+          <li><a href="https://muchong.com" target="_blank" rel="noopener">小木虫论坛</a><span>科研互助与经验分享</span></li>
+          <li><a href="http://www.moe.gov.cn" target="_blank" rel="noopener">学术规范文件</a><span>署名 / 引用规范</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 社区交流 -->
+<section class="community" id="community">
+  <div class="container">
+    <div class="section-head">
+      <h2>社区交流</h2>
+      <p>科研经验分享与互助讨论</p>
+      <div class="bar"></div>
+    </div>
+    <div class="post-list">
+      <div class="post-item">
+        <div class="post-avatar">李</div>
+        <div class="post-body">
+          <h4><a href="https://blog.sciencenet.cn" target="_blank" rel="noopener">分享：我的第一篇 SCI 从投稿到接收的完整时间线</a></h4>
+          <div class="post-meta">科研写作 · 来源：科学网博客 · 2 小时前</div>
+        </div>
+        <div class="post-stats"><span>💬 23</span><span>👍 87</span></div>
+      </div>
+      <div class="post-item">
+        <div class="post-avatar">王</div>
+        <div class="post-body">
+          <h4><a href="https://muchong.com" target="_blank" rel="noopener">求教：国自然青年基金申请书预算科目怎么填？</a></h4>
+          <div class="post-meta">基金申报 · 来源：小木虫论坛 · 5 小时前</div>
+        </div>
+        <div class="post-stats"><span>💬 41</span><span>👍 12</span></div>
+      </div>
+      <div class="post-item">
+        <div class="post-avatar">张</div>
+        <div class="post-body">
+          <h4><a href="https://www.zotero.org" target="_blank" rel="noopener">Zotero + 插件组合推荐，文献管理效率翻倍</a></h4>
+          <div class="post-meta">工具分享 · 来源：Zotero 官网 · 昨天</div>
+        </div>
+        <div class="post-stats"><span>💬 56</span><span>👍 132</span></div>
+      </div>
+      <div class="post-item">
+        <div class="post-avatar">陈</div>
+        <div class="post-body">
+          <h4><a href="https://muchong.com/f-445-1.aspx" target="_blank" rel="noopener">讨论：审稿人要求补做一组对照实验，是否合理？</a></h4>
+          <div class="post-meta">投稿经验 · 来源：小木虫论坛 · 昨天</div>
+        </div>
+        <div class="post-stats"><span>💬 78</span><span>👍 45</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 订阅 -->
+<div class="subscribe">
+  <h2>订阅会议提醒</h2>
+  <p>留下邮箱，按你的研究方向每周推送最新会议与截止日期提醒</p>
+  <form onsubmit="subscribe(event)">
+    <input type="email" id="subEmail" placeholder="请输入你的邮箱地址" required>
+    <button type="submit">免费订阅</button>
+  </form>
+</div>
+
+<!-- 页脚 -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="color:#fff; margin-bottom:8px;"><span class="mark">学</span>学术驿站</div>
+        <p style="font-size:13px;">科研路上，一站直达。</p>
+      </div>
+      <div>
+        <p><strong style="color:#e2e8f0;">快速链接</strong></p>
+        <p><a href="#conferences">学术会议</a> · <a href="#tools">科研工具</a> · <a href="#resources">资源导航</a></p>
+      </div>
+      <div>
+        <p><strong style="color:#e2e8f0;">关于我们</strong></p>
+        <p><a href="#">关于学术驿站</a> · <a href="#">联系我们</a> · <a href="#">免责声明</a></p>
+      </div>
+      <div>
+        <p><strong style="color:#e2e8f0;">参考来源</strong></p>
+        <p><a href="https://muchong.com" target="_blank" rel="noopener">小木虫</a> · <a href="https://www.sciencenet.cn" target="_blank" rel="noopener">科学网</a> · <a href="https://www.allconfs.org" target="_blank" rel="noopener">学术会议云</a></p>
+      </div>
+    </div>
+    <div class="copyright">© 2026 学术驿站 AcademicHub · 本站为信息聚合导航站，会议、社区内容来自小木虫、科学网、学术会议云等公开平台，版权归原作者所有 · 转载请注明出处</div>
+  </div>
+</footer>
+
+<script>
+  // 会议分类筛选
+  document.getElementById('confFilter').addEventListener('click', function (e) {
+    if (e.target.tagName !== 'BUTTON') return;
+    this.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    const cat = e.target.dataset.cat;
+    document.querySelectorAll('#confGrid .conf-card').forEach(card => {
+      card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
+    });
+  });
+
+  // 搜索（占位实现：演示阶段滚动到会议区，后续可接入真实搜索）
+  function doSearch() {
+    const kw = document.getElementById('globalSearch').value.trim();
+    if (!kw) return;
+    alert('搜索「' + kw + '」：演示版本，接入后端后返回真实结果');
+  }
+  function quickSearch(kw) {
+    document.getElementById('globalSearch').value = kw;
+    doSearch();
+  }
+
+  // 邮箱订阅（演示）
+  function subscribe(e) {
+    e.preventDefault();
+    const email = document.getElementById('subEmail').value.trim();
+    alert('订阅成功（演示）：' + email);
+    e.target.reset();
+  }
+</script>
+</body>
+</html>

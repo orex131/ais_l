@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# 站点地图（上线后请将域名替换为你的正式域名）
+Sitemap: https://www.your-domain.cn/sitemap.xml
