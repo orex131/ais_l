@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>学术驿站 — 学术会议 · 科研工具 · 资源导航</title>
 <meta name="description" content="学术驿站：一站式学术信息平台，汇聚学术会议日历、科研实用工具、文献资源导航与科研社区交流。">
+<!-- 启用登录时填入 Supabase 的 Project URL 和 Publishable key。 -->
+<meta name="supabase-url" content="">
+<meta name="supabase-publishable-key" content="">
 <style>
   :root {
     --primary: #2b6cb0;
@@ -63,12 +66,73 @@
   nav a:hover { color: var(--primary); }
   .nav-cta {
     background: var(--primary);
-    color: #fff !important;
+    color: #fff;
+    border: 0;
     padding: 8px 18px;
     border-radius: 20px;
+    font: inherit;
     font-size: 14px;
+    cursor: pointer;
   }
   .nav-cta:hover { background: var(--primary-dark); }
+
+  /* ===== 邮箱登录 ===== */
+  .auth-dialog {
+    position: fixed;
+    inset: 0;
+    width: min(420px, calc(100% - 32px));
+    max-height: calc(100% - 32px);
+    margin: auto;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    background: #fff;
+    box-shadow: 0 18px 60px rgb(26 32 44 / .2);
+  }
+  .auth-dialog::backdrop { background: rgb(26 32 44 / .55); }
+  .auth-dialog [hidden] { display: none; }
+  .auth-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .auth-dialog h2 { font-size: 22px; }
+  .auth-dialog p { font-size: 14px; overflow-wrap: anywhere; }
+  .auth-form { display: grid; gap: 10px; }
+  .auth-form label { font-size: 14px; font-weight: 600; }
+  .auth-form input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #a0aec0;
+    border-radius: 6px;
+    color: inherit;
+    font: inherit;
+  }
+  .auth-dialog button { font: inherit; font-size: 14px; cursor: pointer; }
+  .auth-dialog button:disabled { opacity: .6; cursor: default; }
+  .auth-primary {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--primary);
+    color: #fff;
+  }
+  .auth-primary:hover:not(:disabled) { background: var(--primary-dark); }
+  .auth-secondary {
+    padding: 4px 6px;
+    border: 0;
+    background: transparent;
+    color: var(--primary-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .auth-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+  .auth-account p { margin-bottom: 12px; }
+  .auth-message:not(:empty) { margin-top: 12px; }
+  .auth-message.is-error { color: #a22727; }
 
   /* ===== Hero ===== */
   .hero {
@@ -353,9 +417,40 @@
         <li><a href="#community">社区交流</a></li>
       </ul>
     </nav>
-    <a href="#community" class="nav-cta">登录 / 注册</a>
+    <button class="nav-cta" id="openAuth" type="button" aria-haspopup="dialog">登录 / 注册</button>
   </div>
 </header>
+
+<dialog class="auth-dialog" id="authDialog" aria-labelledby="authTitle">
+  <div class="auth-dialog-head">
+    <h2 id="authTitle">登录 / 注册</h2>
+    <form method="dialog">
+      <button class="auth-secondary" autofocus>关闭</button>
+    </form>
+  </div>
+  <form class="auth-form" id="authEmailForm" hidden>
+    <p>首次验证邮箱后会自动注册。</p>
+    <label for="authEmail">邮箱地址</label>
+    <input type="email" id="authEmail" autocomplete="email" required>
+    <button class="auth-primary" type="submit">发送验证码</button>
+  </form>
+  <form class="auth-form" id="authCodeForm" hidden>
+    <p id="authCodeDestination"></p>
+    <label for="authCode">邮箱验证码</label>
+    <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code"
+           pattern="[0-9]{6,10}" maxlength="10" required>
+    <button class="auth-primary" type="submit">验证并登录</button>
+    <div class="auth-actions">
+      <button class="auth-secondary" id="authEditEmail" type="button">更换邮箱</button>
+      <button class="auth-secondary" id="authResend" type="button">重新发送</button>
+    </div>
+  </form>
+  <div class="auth-account" id="authAccount" hidden>
+    <p id="authAccountEmail"></p>
+    <button class="auth-primary" id="authSignOut" type="button">退出登录</button>
+  </div>
+  <p class="auth-message" id="authMessage" role="status"></p>
+</dialog>
 
 <!-- Hero + 全站搜索 -->
 <section class="hero" id="home">
@@ -729,6 +824,183 @@
     alert('订阅成功（演示）：' + email);
     e.target.reset();
   }
+</script>
+<script>
+  (() => {
+    const projectUrl = document.querySelector('meta[name="supabase-url"]').content.trim();
+    const publishableKey = document.querySelector('meta[name="supabase-publishable-key"]').content.trim();
+    const configured = projectUrl.startsWith('https://') && publishableKey.startsWith('sb_publishable_');
+    const trigger = document.getElementById('openAuth');
+    const dialog = document.getElementById('authDialog');
+    const title = document.getElementById('authTitle');
+    const emailForm = document.getElementById('authEmailForm');
+    const emailInput = document.getElementById('authEmail');
+    const codeForm = document.getElementById('authCodeForm');
+    const codeInput = document.getElementById('authCode');
+    const codeDestination = document.getElementById('authCodeDestination');
+    const resend = document.getElementById('authResend');
+    const editEmail = document.getElementById('authEditEmail');
+    const account = document.getElementById('authAccount');
+    const accountEmail = document.getElementById('authAccountEmail');
+    const signOut = document.getElementById('authSignOut');
+    const message = document.getElementById('authMessage');
+    const formControls = dialog.querySelectorAll('.auth-form input, .auth-form button, #authSignOut');
+
+    let connection;
+    let auth;
+    let user = null;
+    let pendingEmail = '';
+    let busy = false;
+
+    function renderAuth() {
+      trigger.textContent = title.textContent = user ? '我的账号' : '登录 / 注册';
+      emailForm.hidden = !auth || !!user || !!pendingEmail;
+      codeForm.hidden = !auth || !!user || !pendingEmail;
+      account.hidden = !user;
+      accountEmail.textContent = user ? '已登录邮箱：' + user.email : '';
+      codeDestination.textContent = pendingEmail ? '验证码已发送至 ' + pendingEmail : '';
+      formControls.forEach(control => { control.disabled = busy; });
+    }
+
+    function showMessage(text, error = false) {
+      message.classList.toggle('is-error', error);
+      message.textContent = text;
+    }
+
+    function connectAuth() {
+      if (connection) return connection;
+
+      connection = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js';
+        script.integrity = 'sha384-A97u3Qnt9GZHURO9YJZRe7VQgGUeFzcv6I1oIGnUTxQrCxnpQMwR0/G8F2zt9abZ';
+        script.crossOrigin = 'anonymous';
+        script.onerror = () => {
+          script.remove();
+          reject(new Error('Could not load Supabase'));
+        };
+        script.onload = () => {
+          try {
+            const client = window.supabase.createClient(projectUrl, publishableKey, {
+              auth: { detectSessionInUrl: false }
+            }).auth;
+            client.onAuthStateChange((event, session) => {
+              user = session?.user ?? null;
+              if (user || event === 'SIGNED_OUT') {
+                pendingEmail = '';
+                emailForm.reset();
+                codeForm.reset();
+                showMessage('');
+              }
+              if (event === 'INITIAL_SESSION') {
+                auth = client;
+                resolve(client);
+              }
+              renderAuth();
+            });
+          } catch (error) {
+            script.remove();
+            reject(error);
+          }
+        };
+        document.head.append(script);
+      }).catch(() => {
+        connection = null;
+        return null;
+      });
+
+      return connection;
+    }
+
+    async function runAuthAction(action, fallback, errorFocus) {
+      if (!auth || busy) return;
+      busy = true;
+      renderAuth();
+      showMessage('处理中…');
+      let focusTarget = errorFocus;
+      try {
+        focusTarget = await action();
+      } catch (error) {
+        const messages = {
+          otp_expired: '验证码不正确或已过期。请检查邮件，或重新发送验证码。',
+          over_email_send_rate_limit: '验证码发送过于频繁，请稍后再试。',
+          over_request_rate_limit: '尝试次数过多，请稍后再试。'
+        };
+        showMessage(messages[error?.code] || fallback, true);
+      } finally {
+        busy = false;
+        renderAuth();
+        if (dialog.open) focusTarget?.focus();
+      }
+    }
+
+    function sendCode(email, errorFocus) {
+      return runAuthAction(async () => {
+        const { error } = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+        if (error) throw error;
+        pendingEmail = email;
+        codeForm.reset();
+        showMessage('请查看收件箱或垃圾邮件，输入最新的验证码。');
+        return codeInput;
+      }, '发送失败，请检查邮箱地址或稍后再试。', errorFocus);
+    }
+
+    trigger.addEventListener('click', async () => {
+      dialog.showModal();
+      if (!configured) {
+        showMessage('邮箱登录暂未开通。');
+        return;
+      }
+      if (!auth) {
+        showMessage('正在连接登录服务…');
+        const client = await connectAuth();
+        if (!client) {
+          showMessage('暂时无法连接登录服务，请关闭后重试。', true);
+          return;
+        }
+        showMessage('');
+      }
+      if (dialog.open && !busy) {
+        const focusTarget = user ? signOut : pendingEmail ? codeInput : emailInput;
+        focusTarget.focus();
+      }
+    });
+
+    emailForm.addEventListener('submit', event => {
+      event.preventDefault();
+      sendCode(emailInput.value.trim(), emailInput);
+    });
+    resend.addEventListener('click', () => sendCode(pendingEmail, codeInput));
+    editEmail.addEventListener('click', () => {
+      pendingEmail = '';
+      codeForm.reset();
+      showMessage('');
+      renderAuth();
+      emailInput.focus();
+    });
+    codeForm.addEventListener('submit', event => {
+      event.preventDefault();
+      runAuthAction(async () => {
+        const { data, error } = await auth.verifyOtp({
+          email: pendingEmail, token: codeInput.value, type: 'email'
+        });
+        if (error) throw error;
+        if (!data.session) throw new Error('No session created');
+        showMessage('登录成功。');
+        return signOut;
+      }, '登录失败，请检查验证码后重试。', codeInput);
+    });
+    signOut.addEventListener('click', () => {
+      runAuthAction(async () => {
+        const { error } = await auth.signOut({ scope: 'local' });
+        if (error && user) throw error;
+        showMessage('已退出登录。');
+        return emailInput;
+      }, '退出登录失败，请稍后重试。', signOut);
+    });
+
+    if (configured) connectAuth();
+  })();
 </script>
 </body>
 </html>
