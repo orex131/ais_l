@@ -76,8 +76,8 @@
   }
   .nav-cta:hover { background: var(--primary-dark); }
 
-  /* ===== 邮箱登录 ===== */
-  .auth-dialog {
+  /* ===== 弹窗 ===== */
+  .site-dialog {
     position: fixed;
     inset: 0;
     width: min(420px, calc(100% - 32px));
@@ -90,16 +90,27 @@
     background: #fff;
     box-shadow: 0 18px 60px rgb(26 32 44 / .2);
   }
-  .auth-dialog::backdrop { background: rgb(26 32 44 / .55); }
-  .auth-dialog [hidden] { display: none; }
-  .auth-dialog-head {
+  .site-dialog::backdrop { background: rgb(26 32 44 / .55); }
+  .site-dialog-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 12px;
   }
-  .auth-dialog h2 { font-size: 22px; }
+  .site-dialog h2 { font-size: 22px; }
+  .site-dialog button { font: inherit; font-size: 14px; cursor: pointer; }
+  .dialog-text-button {
+    padding: 4px 6px;
+    border: 0;
+    background: transparent;
+    color: var(--primary-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== 邮箱登录 ===== */
+  .auth-dialog [hidden] { display: none; }
   .auth-dialog p { font-size: 14px; overflow-wrap: anywhere; }
   .auth-form { display: grid; gap: 10px; }
   .auth-form label { font-size: 14px; font-weight: 600; }
@@ -111,7 +122,6 @@
     color: inherit;
     font: inherit;
   }
-  .auth-dialog button { font: inherit; font-size: 14px; cursor: pointer; }
   .auth-dialog button:disabled { opacity: .6; cursor: default; }
   .auth-primary {
     padding: 8px 14px;
@@ -121,14 +131,6 @@
     color: #fff;
   }
   .auth-primary:hover:not(:disabled) { background: var(--primary-dark); }
-  .auth-secondary {
-    padding: 4px 6px;
-    border: 0;
-    background: transparent;
-    color: var(--primary-dark);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
   .auth-actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
   .auth-account p { margin-bottom: 12px; }
   .auth-message:not(:empty) { margin-top: 12px; }
@@ -390,8 +392,24 @@
     gap: 24px;
     margin-bottom: 24px;
   }
-  footer a { color: #cbd5e0; }
-  footer a:hover { color: #fff; }
+  footer a, .contact-trigger { color: #cbd5e0; }
+  footer a:hover, .contact-trigger:hover { color: #fff; }
+  .contact-trigger {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+  }
+  .contact-id { text-align: center; }
+  .contact-qr {
+    display: block;
+    width: min(100%, 300px);
+    height: auto;
+    margin: 10px auto 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
   .copyright { text-align: center; border-top: 1px solid #2d3748; padding-top: 18px; font-size: 13px; }
 
   /* ===== 响应式 ===== */
@@ -421,11 +439,11 @@
   </div>
 </header>
 
-<dialog class="auth-dialog" id="authDialog" aria-labelledby="authTitle">
-  <div class="auth-dialog-head">
+<dialog class="site-dialog auth-dialog" id="authDialog" aria-labelledby="authTitle">
+  <div class="site-dialog-head">
     <h2 id="authTitle">登录 / 注册</h2>
     <form method="dialog">
-      <button class="auth-secondary" autofocus>关闭</button>
+      <button class="dialog-text-button" autofocus>关闭</button>
     </form>
   </div>
   <form class="auth-form" id="authEmailForm" hidden>
@@ -441,8 +459,8 @@
            pattern="[0-9]{6,10}" maxlength="10" required>
     <button class="auth-primary" type="submit">验证并登录</button>
     <div class="auth-actions">
-      <button class="auth-secondary" id="authEditEmail" type="button">更换邮箱</button>
-      <button class="auth-secondary" id="authResend" type="button">重新发送</button>
+      <button class="dialog-text-button" id="authEditEmail" type="button">更换邮箱</button>
+      <button class="dialog-text-button" id="authResend" type="button">重新发送</button>
     </div>
   </form>
   <div class="auth-account" id="authAccount" hidden>
@@ -707,7 +725,11 @@
       </div>
       <div>
         <p><strong style="color:#e2e8f0;">关于我们</strong></p>
-        <p><a href="#">关于保研灯塔</a> · <a href="#">联系我们</a> · <a href="#">免责声明</a></p>
+        <p>
+          <a href="#">关于保研灯塔</a> ·
+          <button type="button" class="contact-trigger" id="openContact" aria-haspopup="dialog">联系我们</button> ·
+          <a href="#">免责声明</a>
+        </p>
       </div>
       <div>
         <p><strong style="color:#e2e8f0;">参考来源</strong></p>
@@ -718,7 +740,23 @@
   </div>
 </footer>
 
+<dialog class="site-dialog" id="contactDialog" aria-labelledby="contactTitle">
+  <div class="site-dialog-head">
+    <h2 id="contactTitle">联系我们</h2>
+    <form method="dialog">
+      <button class="dialog-text-button" autofocus>关闭</button>
+    </form>
+  </div>
+  <p class="contact-id">微信号 <strong>BYDT0003</strong></p>
+  <img class="contact-qr" src="wechat-qr.jpg" alt="微信添加好友二维码"
+       width="1094" height="1625" loading="lazy">
+</dialog>
+
 <script>
+  document.getElementById('openContact').addEventListener('click', () => {
+    document.getElementById('contactDialog').showModal();
+  });
+
   // 会议分类筛选
   document.getElementById('confFilter').addEventListener('click', function (e) {
     if (e.target.tagName !== 'BUTTON') return;
