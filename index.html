@@ -90,14 +90,17 @@
   }
   .search-bar input {
     flex: 1;
+    min-width: 0;
     border: none;
     outline: none;
     font-size: 15px;
     color: var(--text);
     background: transparent;
   }
+  .search-bar:focus-within { outline: 2px solid #fff; outline-offset: 4px; }
   .search-bar button {
-    background: var(--accent);
+    flex-shrink: 0;
+    background: #ad5014;
     color: #fff;
     border: none;
     border-radius: 22px;
@@ -105,9 +108,60 @@
     font-size: 15px;
     cursor: pointer;
   }
-  .search-bar button:hover { background: #cf6d15; }
-  .hero-tags { margin-top: 18px; font-size: 13px; opacity: .85; }
-  .hero-tags span { margin: 0 8px; cursor: pointer; }
+  .search-bar button:hover { background: #923f0e; }
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: 14px;
+    font-size: 13px;
+  }
+  .hero-tags button {
+    padding: 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== 搜索结果 ===== */
+  .search-results {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 64px;
+  }
+  .search-results .container { max-width: 760px; }
+  .search-results-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-bottom: 8px;
+  }
+  .search-results h2 { font-size: 24px; }
+  .clear-search {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fff;
+    color: var(--primary-dark);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .clear-search:hover { background: var(--bg); }
+  .search-summary { overflow-wrap: anywhere; }
+  .search-list { list-style: none; margin-top: 12px; }
+  .search-list li { padding: 14px 0; border-top: 1px solid var(--border); }
+  .search-list a { font-weight: 600; }
+  .search-list a:hover { text-decoration: underline; }
+  .search-list p { margin-top: 2px; color: #526278; font-size: 14px; }
 
   /* ===== 通用区块 ===== */
   section { padding: 56px 0; }
@@ -307,15 +361,28 @@
 <section class="hero" id="home">
   <h1>科研路上，一站直达</h1>
   <p>汇聚学术会议、科研工具与文献资源，帮助每一位科研人高效获取信息、专注科研本身。</p>
-  <div class="search-bar">
-    <input type="text" id="globalSearch" placeholder="搜索会议、期刊、工具、经验帖……">
-    <button onclick="doSearch()">搜索</button>
+  <form class="search-bar" id="searchForm" role="search">
+    <input type="search" id="globalSearch" aria-label="站内搜索"
+           placeholder="搜索会议、科研工具、资源或经验帖">
+    <button type="submit">搜索</button>
+  </form>
+  <div class="hero-tags" id="searchSuggestions">
+    <span>热门：</span>
+    <button type="button">国自然</button>
+    <button type="button">博士招生</button>
+    <button type="button">影响因子</button>
+    <button type="button">论文查重</button>
   </div>
-  <div class="hero-tags">
-    热门：<span onclick="quickSearch('国自然')">国自然</span> |
-    <span onclick="quickSearch('博士招生')">博士招生</span> |
-    <span onclick="quickSearch('影响因子')">影响因子</span> |
-    <span onclick="quickSearch('论文润色')">论文润色</span>
+</section>
+
+<section class="search-results" id="searchResults" aria-labelledby="searchHeading" hidden>
+  <div class="container">
+    <div class="search-results-head">
+      <h2 id="searchHeading" tabindex="-1" aria-describedby="searchSummary">搜索结果</h2>
+      <button class="clear-search" id="clearSearch" type="button">清除搜索</button>
+    </div>
+    <p class="search-summary" id="searchSummary"></p>
+    <ul class="search-list" id="searchList" hidden></ul>
   </div>
 </section>
 
@@ -451,7 +518,7 @@
       <div class="res-col">
         <h3>基金与项目</h3>
         <ul>
-          <li><a href="https://www.nsfc.gov.cn" target="_blank" rel="noopener">国家自然科学基金委</a><span>NSFC 申报指南</span></li>
+          <li data-search-keywords="国自然"><a href="https://www.nsfc.gov.cn" target="_blank" rel="noopener">国家自然科学基金委</a><span>NSFC 申报指南</span></li>
           <li><a href="https://www.most.gov.cn" target="_blank" rel="noopener">科技部政务平台</a><span>国家重点研发计划</span></li>
           <li><a href="http://www.moe.gov.cn" target="_blank" rel="noopener">中华人民共和国教育部</a><span>高校科研政策</span></li>
         </ul>
@@ -459,7 +526,7 @@
       <div class="res-col">
         <h3>招生与招聘</h3>
         <ul>
-          <li><a href="https://yz.chsi.com.cn" target="_blank" rel="noopener">中国研究生招生信息网</a><span>硕博招生官方平台</span></li>
+          <li data-search-keywords="博士招生 硕士招生"><a href="https://yz.chsi.com.cn" target="_blank" rel="noopener">中国研究生招生信息网</a><span>硕博招生官方平台</span></li>
           <li><a href="https://www.chinapostdoctor.org.cn" target="_blank" rel="noopener">中国博士后</a><span>博后招聘与基金</span></li>
           <li><a href="https://www.gaoxiaojob.com" target="_blank" rel="noopener">高校人才网</a><span>教职与人才引进</span></li>
         </ul>
@@ -568,16 +635,92 @@
     });
   });
 
-  // 搜索（占位实现：演示阶段滚动到会议区，后续可接入真实搜索）
-  function doSearch() {
-    const kw = document.getElementById('globalSearch').value.trim();
-    if (!kw) return;
-    alert('搜索「' + kw + '」：演示版本，接入后端后返回真实结果');
+  // 直接索引页面上的条目，更新内容时可继续复用原有卡片和链接。
+  const searchForm = document.getElementById('searchForm');
+  const searchInput = document.getElementById('globalSearch');
+  const searchResults = document.getElementById('searchResults');
+  const searchHeading = document.getElementById('searchHeading');
+  const searchSummary = document.getElementById('searchSummary');
+  const searchList = document.getElementById('searchList');
+  const searchGroups = [
+    { category: '学术会议', items: '#confGrid .conf-card', title: 'h3', details: '.tag, .meta' },
+    { category: '科研工具', items: '#tools .tool-card', title: 'h3', details: 'p, .src' },
+    { category: '资源导航', items: '#resources .res-col li', title: 'a', details: 'span' },
+    { category: '社区交流', items: '#community .post-item', title: 'h4', details: '.post-meta' }
+  ];
+
+  function normalizeSearchText(text) {
+    return text.normalize('NFKC').toLowerCase().trim().replace(/\s+/g, ' ');
   }
-  function quickSearch(kw) {
-    document.getElementById('globalSearch').value = kw;
-    doSearch();
+
+  const searchIndex = searchGroups.flatMap(({ category, items, title, details }) =>
+    Array.from(document.querySelectorAll(items), item => {
+      const source = item.matches('a') ? item : item.querySelector('a');
+      const name = item.querySelector(title).textContent.trim();
+      const description = Array.from(item.querySelectorAll(details), field => field.textContent.trim())
+        .join(' · ');
+      const searchableText = normalizeSearchText([category, name, description, item.dataset.searchKeywords].join(' '));
+      return { source, name, category, description, searchableText };
+    })
+  );
+
+  function createSearchResult({ source, name, category, description }) {
+    const result = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = source.href;
+    link.target = source.target;
+    link.rel = source.rel;
+    link.textContent = name;
+    const details = document.createElement('p');
+    details.textContent = category + ' · ' + description;
+    result.append(link, details);
+    return result;
   }
+
+  function hideSearchResults() {
+    searchResults.hidden = true;
+    searchList.hidden = true;
+    searchList.replaceChildren();
+    searchSummary.textContent = '';
+  }
+
+  searchForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const query = searchInput.value.trim();
+    if (!query) {
+      hideSearchResults();
+      searchInput.focus();
+      return;
+    }
+
+    const terms = normalizeSearchText(query).split(' ');
+    const matches = searchIndex.filter(item => terms.every(term => item.searchableText.includes(term)));
+    searchList.replaceChildren(...matches.map(createSearchResult));
+    searchList.hidden = matches.length === 0;
+    searchSummary.textContent = matches.length
+      ? `找到 ${matches.length} 条与「${query}」相关的内容。`
+      : `未找到与「${query}」相关的内容，请试试更短的关键词。`;
+    searchResults.hidden = false;
+    searchHeading.focus({ preventScroll: true });
+    searchResults.scrollIntoView();
+  });
+
+  document.querySelectorAll('#searchSuggestions button').forEach(button => {
+    button.addEventListener('click', () => {
+      searchInput.value = button.textContent.trim();
+      searchForm.requestSubmit();
+    });
+  });
+
+  searchInput.addEventListener('input', () => {
+    if (!searchInput.value) hideSearchResults();
+  });
+
+  document.getElementById('clearSearch').addEventListener('click', () => {
+    searchForm.reset();
+    hideSearchResults();
+    searchInput.focus();
+  });
 
   // 邮箱订阅（演示）
   function subscribe(e) {
